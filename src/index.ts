@@ -3,6 +3,8 @@ import { drizzle } from 'drizzle-orm/d1';
 import { discordBotTable as discordBot } from './schema';
 import { WorkerEntrypoint } from 'cloudflare:workers';
 
+const API_URL = 'https://ajou-notice.asitis.workers.dev';
+
 export interface Env {
 	DB: D1Database;
 	NOTICE_WORKER: Service<WorkerEntrypoint>;
@@ -30,7 +32,16 @@ export default {
 		const { pathname, searchParams } = new URL(request.url);
 
 		if (pathname === '/api/webhook') {
-			if (request.method === 'GET') {
+			if (request.method === 'OPTIONS') {
+				return new Response('', {
+					headers: {
+						'Access-Control-Allow-Origin': '*',
+						'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
+						'Access-Control-Allow-Headers': 'Content-Type',
+						'Access-Control-Max-Age': '86400',
+					},
+				});
+			} else if (request.method === 'GET') {
 				const webhook = searchParams.get('webhook');
 				if (!webhook) {
 					return new Response('Bad Request: Missing `webhook` parameter', {
@@ -45,7 +56,11 @@ export default {
 					});
 				}
 
-				return Response.json(info);
+				return Response.json(info, {
+					headers: {
+						'Access-Control-Allow-Origin': '*',
+					},
+				});
 			} else if (request.method === 'POST') {
 				const webhook = searchParams.get('webhook');
 				if (!webhook) {
@@ -61,7 +76,7 @@ export default {
 				if (department) queryParams.append('department', department);
 				if (search) queryParams.append('search', search);
 
-				const response = await env.NOTICE_WORKER.fetch(`https://ajou-notice.asitis.workers.dev/api/notices?${queryParams.toString()}`, {
+				const response = await env.NOTICE_WORKER.fetch(`${API_URL}/api/notices?${queryParams.toString()}`, {
 					method: 'GET',
 				});
 				const notices: Notice[] = await response.json();
@@ -82,8 +97,33 @@ export default {
 
 					await db.insert(discordBot).values(newRecord);
 
-					return new Response('Resource created successfully', {
+					return new Response('Webhook registered successfully', {
 						status: 201,
+					});
+				} catch (error) {
+					return new Response('Internal Server Error', {
+						status: 500,
+					});
+				}
+			} else if (request.method === 'DELETE') {
+				const webhook = searchParams.get('webhook');
+				if (!webhook) {
+					return new Response('Bad Request: Missing `webhook` parameter', {
+						status: 400,
+					});
+				}
+
+				try {
+					const result = await db.delete(discordBot).where(eq(discordBot.webhook, webhook));
+
+					if (result.meta.rows_read === 0) {
+						return new Response('Not Found: Webhook not found', {
+							status: 404,
+						});
+					}
+
+					return new Response('Webhook deleted successfully', {
+						status: 200,
 					});
 				} catch (error) {
 					return new Response('Internal Server Error', {
@@ -122,7 +162,7 @@ export default {
 				});
 			}
 
-			const response = await env.NOTICE_WORKER.fetch(`https://ajou-notice.asitis.workers.dev/api/notices?${info.queryParams}`, {
+			const response = await env.NOTICE_WORKER.fetch(`/api/notices?${info.queryParams}`, {
 				method: 'GET',
 			});
 			const notices: Notice[] = await response.json();
