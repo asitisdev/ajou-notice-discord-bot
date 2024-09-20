@@ -45,6 +45,9 @@ export default {
 				const webhook = searchParams.get('webhook');
 				if (!webhook) {
 					return new Response('Bad Request: Missing `webhook` parameter', {
+						headers: {
+							'Access-Control-Allow-Origin': '*',
+						},
 						status: 400,
 					});
 				}
@@ -52,6 +55,9 @@ export default {
 				const info = await db.select().from(discordBot).where(eq(discordBot.webhook, webhook)).get();
 				if (!info) {
 					return new Response('Not Found: Webhook not found', {
+						headers: {
+							'Access-Control-Allow-Origin': '*',
+						},
 						status: 404,
 					});
 				}
@@ -65,6 +71,9 @@ export default {
 				const webhook = searchParams.get('webhook');
 				if (!webhook) {
 					return new Response('Bad Request: Missing `webhook` parameter', {
+						headers: {
+							'Access-Control-Allow-Origin': '*',
+						},
 						status: 400,
 					});
 				}
@@ -91,6 +100,9 @@ export default {
 					const info = await db.select().from(discordBot).where(eq(discordBot.webhook, webhook)).get();
 					if (info) {
 						return new Response('Conflict: Duplicate entry for unique field', {
+							headers: {
+								'Access-Control-Allow-Origin': '*',
+							},
 							status: 409,
 						});
 					}
@@ -98,10 +110,16 @@ export default {
 					await db.insert(discordBot).values(newRecord);
 
 					return new Response('Webhook registered successfully', {
+						headers: {
+							'Access-Control-Allow-Origin': '*',
+						},
 						status: 201,
 					});
 				} catch (error) {
 					return new Response('Internal Server Error', {
+						headers: {
+							'Access-Control-Allow-Origin': '*',
+						},
 						status: 500,
 					});
 				}
@@ -109,6 +127,9 @@ export default {
 				const webhook = searchParams.get('webhook');
 				if (!webhook) {
 					return new Response('Bad Request: Missing `webhook` parameter', {
+						headers: {
+							'Access-Control-Allow-Origin': '*',
+						},
 						status: 400,
 					});
 				}
@@ -118,15 +139,24 @@ export default {
 
 					if (result.meta.rows_read === 0) {
 						return new Response('Not Found: Webhook not found', {
+							headers: {
+								'Access-Control-Allow-Origin': '*',
+							},
 							status: 404,
 						});
 					}
 
 					return new Response('Webhook deleted successfully', {
+						headers: {
+							'Access-Control-Allow-Origin': '*',
+						},
 						status: 200,
 					});
 				} catch (error) {
 					return new Response('Internal Server Error', {
+						headers: {
+							'Access-Control-Allow-Origin': '*',
+						},
 						status: 500,
 					});
 				}
@@ -134,6 +164,7 @@ export default {
 				return new Response('Method Not Allowed', {
 					status: 405,
 					headers: {
+						'Access-Control-Allow-Origin': '*',
 						Allow: 'GET',
 					},
 				});
@@ -143,6 +174,7 @@ export default {
 				return new Response('Method Not Allowed', {
 					status: 405,
 					headers: {
+						'Access-Control-Allow-Origin': '*',
 						Allow: 'GET',
 					},
 				});
@@ -151,6 +183,9 @@ export default {
 			const webhook = searchParams.get('webhook');
 			if (!webhook) {
 				return new Response('Bad Request: Missing `webhook` parameter', {
+					headers: {
+						'Access-Control-Allow-Origin': '*',
+					},
 					status: 400,
 				});
 			}
@@ -158,11 +193,14 @@ export default {
 			const info = await db.select().from(discordBot).where(eq(discordBot.webhook, webhook)).get();
 			if (!info) {
 				return new Response('Not Found: Webhook not found', {
+					headers: {
+						'Access-Control-Allow-Origin': '*',
+					},
 					status: 404,
 				});
 			}
 
-			const response = await env.NOTICE_WORKER.fetch(`/api/notices?${info.queryParams}`, {
+			const response = await env.NOTICE_WORKER.fetch(`${API_URL}/api/notices?${info.queryParams}`, {
 				method: 'GET',
 			});
 			const notices: Notice[] = await response.json();
@@ -186,11 +224,17 @@ export default {
 			}
 
 			return new Response('Success', {
+				headers: {
+					'Access-Control-Allow-Origin': '*',
+				},
 				status: 200,
 			});
 		}
 
 		return new Response('Call /api/webhook', {
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+			},
 			status: 404,
 		});
 	},
