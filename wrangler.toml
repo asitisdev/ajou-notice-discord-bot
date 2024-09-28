@@ -7,9 +7,8 @@ services = [
     { binding = "NOTICE_WORKER", service = "ajou-notice" }
 ]
 
-# KST 기준 평일 9시-19시 10분 간격 / 이외 시간대 1시간 간격 업데이트
 [triggers]
-crons = ["*/10 0-10 * * 2-6", "0 11-23 * * 2-6"]
+crons = ["*/10 * * * 2-6"]
 
 # Automatically place your workloads in an optimal location to minimize latency.
 # If you are running back-end logic in a Worker, running it closer to your back-end infrastructure
