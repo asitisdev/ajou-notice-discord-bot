@@ -22,9 +22,21 @@ interface Notice {
 	department: string;
 	title: string;
 	content: string;
+	summary: string;
 	url: string;
 	date: string;
 }
+
+const sendMessage = async (webhook: string, message: string) => {
+	const form = new FormData();
+	form.append('content', message);
+	form.append('avatar_url', 'https://www.ajou.ac.kr/_res/ajou/kr/img/intro/img-symbol.png');
+
+	await fetch(webhook, {
+		method: 'POST',
+		body: form,
+	});
+};
 
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
@@ -213,14 +225,8 @@ export default {
 			const newNotices = notices.filter((notice) => notice.id > info.latestId).reverse();
 
 			for (const notice of newNotices) {
-				const form = new FormData();
-				form.append('content', `${notice.title}\n${notice.url}`);
-				form.append('avatar_url', 'https://www.ajou.ac.kr/_res/ajou/kr/img/intro/img-symbol.png');
-
-				await fetch(webhook, {
-					method: 'POST',
-					body: form,
-				});
+				const message = `## ${notice.title} [🔗](${notice.url})\n\n${notice.summary}`;
+				await sendMessage(webhook, message);
 			}
 
 			return new Response('Success', {
@@ -258,14 +264,8 @@ export default {
 			const newNotices = notices.filter((notice) => notice.id > bot.latestId).reverse();
 
 			for (const notice of newNotices) {
-				const form = new FormData();
-				form.append('content', `${notice.title}\n${notice.url}`);
-				form.append('avatar_url', 'https://www.ajou.ac.kr/_res/ajou/kr/img/intro/img-symbol.png');
-
-				await fetch(bot.webhook, {
-					method: 'POST',
-					body: form,
-				});
+				const message = `## ${notice.title} [🔗](${notice.url})\n\n${notice.summary}`;
+				await sendMessage(bot.webhook, message);
 			}
 		}
 	},
